@@ -1,0 +1,95 @@
+---
+title: "SQL and R"
+author: "Amanda Arce"
+date: "September 8, 2018"
+output: html_document
+---
+
+
+###Choose six recent popular movies. Ask at least five people that you know (friends, family, classmates, imaginary friends) to rate each of these movie that they have seen on a scale of 1 to 5. Take the results (observations) and store them in a SQL database. Load the information into an R dataframe.
+
+
+###Below I will connect MySQL database "popular" to R Studio
+
+
+```{r}
+
+library(RMySQL)
+library(dbConnect)
+library(ggplot2)
+library(dplyr)
+
+
+
+
+mydb = dbConnect(MySQL(), user='root', password='haley', dbname='popular', host='localhost')
+
+
+popular <- dbGetQuery(mydb, "select * from reviewers")
+
+popular
+
+```
+###Above I have queried the reviewers table, followed by the ratings table below.
+```{r}
+
+popular <- dbGetQuery(mydb, "select * from ratings")
+
+popular
+```
+###Here I have queried the popular movies table
+
+```{r}
+popular <- dbGetQuery(mydb, "select * from popular_movies ")
+
+popular
+
+```
+
+
+###At this point, I will now create a join query to analyze the title of the movies and how rated them.
+```{r}
+
+
+popular <- dbGetQuery(mydb,"SELECT user_id, title, ratings.movie_id, rating
+                    FROM popular_movies
+                    JOIN ratings
+                     on popular_movies.movie_id = ratings.movie_id")
+
+popular
+```
+
+
+###On this next query, I decided to add the "Reviwers" table to bring in the "Raters names"
+```{r}
+popular <- dbGetQuery(mydb,
+                    "
+SELECT 
+    ratings.user_id,raters_name, title, rating
+FROM
+    ratings
+JOIN
+    popular_movies ON popular_movies.movie_id = ratings.movie_id
+JOIN
+    reviewers ON reviewers.user_id = ratings.user_id
+ORDER BY 
+    rating DESC
+")
+
+popular
+```
+
+### Now I will see what the average movie rating were from my raters.
+```{r}
+ggplot(data = popular, aes(popular$title, popular$rating)) + 
+  stat_summary(fun.y = mean,
+               geom = "bar", aes(fill = popular$title)) +
+  theme(axis.text.x=element_text(angle=45, hjust=1)) +
+  theme(legend.position="none") +
+  xlab("Movie Name") +
+  ylab("Rating") +
+  ggtitle("Avg Rating for Movies")
+```
+
+###Conclusion: 
+###Based on my analysis, my friends have chosen Black Panther to be one of the highest ratings out of the six movies; followed by The Avengers.  
