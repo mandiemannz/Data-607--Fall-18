@@ -1,0 +1,143 @@
+---
+title: "CUNY MSDS DATA 607 HW 3"
+author: "Amanda Arce"
+date: "September 16, 2018"
+output: html_document
+---
+```{r}
+
+library(stringr)
+library(kableExtra)
+library(knitr)
+
+```
+3.) Copy the introductory example. The vector name stores the extracted names.
+
+a. Use the tools of this chapter to rearrange the vector so that all elements conform to the        standard first_name last_name.
+b. Construct a logical vector indicating whether a character has a title (i.e., Rev. and Dr.).
+
+c. Construct a logical vector indicating whether a character has a second name.
+
+```{r}
+raw.data <-"555-1239Moe Szyslak(636) 555-0113Burns, C. Montgomery555-6542Rev. Timothy Lovejoy555 8904Ned Flanders636-555-3226Simpson, Homer5553642Dr. Julius Hibbert"
+ 
+```
+a. Use the tools of this chapter to rearrange the vector so that all elements conform to the        standard first_name last_name.
+```{r}
+#extract words
+originalNames <-  unlist(str_extract_all(raw.data, "[[:alpha:]., ]{2,}"))
+
+originalNames
+```
+```{r}
+
+#extract middle names 
+names1 <- str_replace(originalNames, "\\s[A-z]\\. ", " ")
+names1
+```
+```{r}
+# change first name to last- found word groups then changed them 
+names2 <- str_replace(names1, "(\\w+),\\s(\\w+)", "\\2 \\1")
+names2
+
+```
+
+
+
+```{r}
+
+#Removed title of name of Rev. Timothy Lovejoy, Dr. Julius Hibbert
+newNames <- str_replace(names2, "[A-z]{2,3}\\. "," ")
+
+newNames
+```
+
+
+```{r}
+originalN <- data.frame(originalNames)
+newN <- data.frame(newNames)
+
+```
+
+```{r}
+# create a table with Kable to list the differences 
+kable(list(originalN,newN),caption='Names')
+
+```
+(b) Construct a logical vector indicating whether a character has a title (i.e., Rev. and Dr.).
+```{r}
+title <- str_detect(names2,"[A-z]{2,3}\\. ")
+df1 <- data.frame(names2, title)
+
+df1
+
+```
+(c) Construct a logical vector indicating whether a character has a second name.
+
+```{r}
+title <- str_detect(originalNames,"[A-Z]{1}\\." )
+df2 <- data.frame(originalNames, title)
+
+df2
+```
+
+4.) Describe the types of strings that conform to the following regular expressions and construct an example that is matched by the regular expression.
+
+a   [0-9]+\$
+b. \b[a-z]{1,4}\b
+c. *?\.txt$
+d. \d{2}/\d{2}/\d{4}
+e. <(.+?)>.+?</\1>  
+
+a.  [0-9]+\$ : Pick numbers 0-9,+ - one or more time, $
+```{r}
+ex_one <- "15689142$now!@23$"
+str_extract_all(ex_one, "[0-9]+\\$" )
+
+
+
+```
+b. \b[a-z]{1,4}\ //b Word Edge, [a-z] letters a-z are lowercase, {1,4} min,max chars 
+```{r}
+ex_two <- " Today is a day great"
+str_extract_all(ex_two, "\\b[a-z]{1,4}\\b")
+```
+c. .*?\.txt$  takes out files: . any chars except line break, /* zero or more times, //. literal ., $ end of line
+
+```{r}
+
+
+ex_three <- "c:/local/amanda/homework.txt"
+str_extract_all(ex_three, ".*?\\.txt$")
+```
+d. \d{2}/\d{2}/\d{4}  takes out dates: //d any num, {2} 2 characters, / a '/'
+```{r}
+ex_four <-  "07/02/1983"
+
+str_extract_all(ex_four, "\\d{2}/\\d{2}/\\d{4}")
+  
+```
+e. <(.+?)>.+?</\1> takes out html code:
+
+```{r}
+ex_five <- "<p>What kind of line is this, a paragraph</p>"
+str_extract_all(ex_five, "<(.+?)>.+?</\\1>")
+
+```
+
+9. The following code hides a secret message. Crack it with R and regular expressions. Hint: Some of the characters are more revealing than others!
+
+```{r}
+data <- "clcopCow1zmstc0d87wnkig7OvdicpNuggvhryn92Gjuwczi8hqrfpRxs5Aj5dwpn0TanwoUwisdij7Lj8kpf03AT5Idr3coc0bt7yczjatOaootj55t3Nj3ne6c4Sfek.r1w1YwwojigOd6vrfUrbz2.2bkAnbhzgv4R9i05zEcrop.wAgnb.SqoU65fPa1otfb7wEm24k6t3sR9zqe5fy89n6Nd5t9kc4fE905gmc4Rgxo5nhDk!gr"
+#takes out all capitalperiods and letters 
+mystery <- unlist(str_extract_all(data, "[[A-Z].]"))
+mystery
+```
+
+```{r}
+# Here I joined the letters together, and removed the spaces
+mystery <- paste(mystery, collapse = "") 
+
+#replaced the '.'s with a space
+str_replace_all(mystery, "[.]", " ")
+```
