@@ -1,0 +1,122 @@
+---
+title: "CUNY MSDS DATA 607 Project 1"
+author: "Amanda Arce"
+date: "September 22, 2018"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: monochrome
+
+---
+
+##Task: 
+In this project, you're given a text file with chess tournament results where the information has some structure. Your job is to create an R Markdown file that generates a .CSV file (that could for example be imported into a SQL database) with the following information for all of the players:
+
+Player's Name, Player's State, Total Number of Points, Player's Pre-Rating, and Average Pre Chess Rating of Opponents For the first player, the information would be:\ 
+
+Gary Hua, ON, 6.0, 1794, 1605
+
+1605 was calculated by using the pre-tournament opponents' ratings of 1436, 1563, 1600, 1610, 1649, 1663, 1716, and dividing by the total number of games played
+
+
+
+
+##Libraries:
+```{r message=FALSE, warning=FALSE}
+library(RCurl)
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+library(stringr)
+```
+
+
+##Access the chess data from github:
+```{r}
+chessdata <- readLines("https://raw.githubusercontent.com/mandiemannz/Data-607--Fall-18/master/project1txt", warn = F)
+head(chessdata, 22)
+```
+From looking at the data from the txt file provided, we can notice that a lot can be omitted from our task.  We can correct/clean the data by the following:
+
+
+If we were to run the following code: seq(from, to, by) this  will let us pull only the rows that have data that is needed.  Therefore, this will make it possible to manipulate with regular expressions and extract information from the data.
+
+```{r}
+#begin at column 5, this will increase to the length of the data, by 3 
+chessdata1 <- c(seq(5, length(chessdata),3))
+#begin at column 6, the will increase to the length of the data, by 3 
+chessdata2 <- c(seq(6, length(chessdata),3))
+```
+
+
+## Data Manipulation:
+The expressions used to pull out necessary data (name, state, total_points, pre_raiting):
+```{r}
+#regex to pull out only the name from chessdata1
+name <- str_replace_all(str_extract(chessdata[chessdata1],"([|]).+?\\1"),"[|]","")
+#extracted state from chessdata2
+state <- str_extract(chessdata[chessdata2], "[A-Z]{2}" )
+#extracted total points from chessdata1
+total_points <- str_extract(chessdata[chessdata1], "\\d.\\d")
+#extracted pre raiting. 
+pre_raiting1 <- as.integer(str_replace_all(str_extract(chessdata[chessdata2], "R: \\s?\\d{3,4}"), "R:\\s", ""))
+#extracted player number
+player_num <- as.integer(str_extract(chessdata[chessdata1], "\\d+"))
+```
+
+###Place the extracted data into a data.frame, then into a kable table:
+```{r}
+df <- data.frame(name, state, player_num, total_points, pre_raiting1)
+```
+
+```{r}
+kable(head(df, 20), "html", escape = F) %>%
+  kable_styling("striped", full_width = F, font_size = 15) %>%
+  column_spec(1:2, bold = T)
+```
+
+### Here I went ahead and manipulated the  data to find opponets scores:
+
+```{r}
+challenger1 <- str_extract_all(chessdata[chessdata1], "\\d+\\|")
+challenger <- str_extract_all(challenger1,"\\d+")
+head(challenger)
+```
+
+
+Created a loop in order to calculate the challengers pre raiting score
+```{r}
+challenger_preraiting <- numeric(length(chessdata1))
+
+for (i in 1:(length(chessdata1))){
+  challenger_preraiting[i] <- mean(pre_raiting1[as.numeric(unlist(challenger[i]))])
+}
+
+challenger_preraiting <- round(challenger_preraiting,0)
+```
+
+```{r}
+df1 <- data.frame(name, state, player_num, total_points, pre_raiting1, challenger_preraiting)
+
+
+
+kable(df1, "html", escape = F) %>%
+  kable_styling("striped", full_width = F, font_size = 15) %>%
+  column_spec(1:2, bold = T)
+```
+
+###Save to a .CSV file
+```{r}
+write.table(df1, file = "C:/Users/manda/Desktop/Data607/DATA_607_Project1.csv", sep = ",", col.names = T)
+```
+
+
+
+
+
+
+
+
+
