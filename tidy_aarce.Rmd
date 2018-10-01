@@ -1,0 +1,80 @@
+---
+title: "CUNY MSDS DATA 607 Assignment 5"
+author: "Amanda Arce"
+date: "September 29, 2018"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: monochrome
+
+
+---
+
+```{r}
+
+library(tidyr)
+library(dplyr)
+library(tidyverse)
+library(knitr)
+
+```
+```{r}
+
+airlines <- read.csv("https://raw.githubusercontent.com/mandiemannz/Data-607--Fall-18/master/flights.csv", stringsAsFactors = FALSE)
+
+airlines
+
+```
+
+Data wrangling added new columns: total_flights, percent_ontime, and percent_delayed
+```{r}
+
+
+
+airline_dt <-airlines
+airline_df <-  airline_dt %>%
+  gather("loc","flights ", 3:7) %>%
+  spread(Status, "flights ") %>%
+  mutate(total_flights = delayed + on_time) %>%
+  mutate(percent_ontime = on_time / total_flights ) %>%
+  mutate(percent_delayed = delayed / total_flights) 
+
+airline_df
+```
+```{r}
+airline_df %>%
+  group_by(Carrier)%>%
+  summarize(total_flights = sum(total_flights))
+```
+
+
+Now let us see which airline and city has the highest percentage of on-time flights
+
+```{r}
+airline_df %>%
+  filter(percent_ontime== max(percent_ontime))
+```
+Alaska airline with flights from Phoenix had the highest on-time percentage from looking at the entire dataset. Percent of 0.95
+
+Now we are going to check which airline and city has the worst percentage of on-time flights
+
+
+```{r}
+airline_df %>%
+  filter(percent_delayed== max(percent_delayed))
+
+
+```
+AM West airlines with flights from San Francisco had the most delayed percentage from looking at the entire dataset. Percent of 0.28 and are on-time 0.71 percent. 
+
+Visualization
+```{r}
+ggplot(airline_df, aes(airline_df$on_time, airline_df$delayed)) +
+  geom_point(aes(color = airline_df$Carrier)) + 
+  ggtitle("Num of flights on-time vs. delayed for both Airlines") +
+  xlab("On-time flights") +
+  ylab("Delayed flights") +
+  theme_dark()
+```
