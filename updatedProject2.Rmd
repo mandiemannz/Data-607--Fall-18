@@ -1,0 +1,339 @@
+---
+title: "Project 2"
+author: "Amanda Arce"
+date: "October 6, 2018"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: monochrome
+---
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(psych)
+```
+
+Data has been taken from various sources, including classmates and various websites
+
+
+#Halloween
+
+The data is first read in using the read_csv function and displayed using head().  This shows what type of data is being worked with.
+
+```{r}
+candyhierarchy2017 <- read_csv("candyhierarchy2017.csv")
+head(candyhierarchy2017)
+```
+
+##Tidy and clean data
+
+The columns are then renammed using the rename() function. This makes it easier to understand what each column means, and gives them meaningful names.
+
+```{r}
+candyhierarchy2017 <- rename(candyhierarchy2017,id = 'Internal ID', 'Going out' = 'Q1: GOING OUT?', Sex = 'Q2: GENDER', Age = "Q3: AGE", Country = "Q4: COUNTRY", State = "Q5: STATE, PROVINCE, COUNTY, ETC", '100 Grand Bar' = 'Q6: 100 Grand Bar', 'Mary Janes'= 'Q6 | Anonymous brown globs that come in black and orange wrappers	(a.k.a. Mary Janes)', 'Full Size Candy Bar' = 'Q6 | Any full-sized candy bar', 'Black Jacks' = 'Q6 | Black Jacks', Bonkers = 'Q6 | Bonkers (the candy)', Butterfinger = "Q6 | Butterfinger", 'Candy Corn' = 'Q6 | Candy Corn')
+
+head(candyhierarchy2017)
+```
+
+The data is then filtered by columns.  The data consists of 120 different variables, most which are not that useful.  The data will filter out unnecessary columns from the dataset.
+
+```{r}
+candy_remove_cols <- candyhierarchy2017[,-c(9:120)]
+names(candy_remove_cols)
+
+head(candy_remove_cols)
+candyhierarchy2017 <- candy_remove_cols
+```
+
+The data has many NA values - for this analysis, the NAs will be removed since there are still 1309 observations after the NA removal.
+
+```{r}
+sum(is.na(candyhierarchy2017))
+head(colSums(is.na(candyhierarchy2017)), 15)
+candy <- candyhierarchy2017
+```
+
+```{r}
+#remove all NA from dataset
+candy2 <- na.omit(candy)
+candy2
+```
+
+##Analysis
+
+The data is then aggregated by sex, so we can get an idea of how many of each gender are in our dataset.
+```{r}
+candy2_sex <- candy2 %>%
+  group_by(Sex) %>%
+  summarize(n=n())
+
+candy2_sex
+```
+
+Most of the participants in the data/survey are Male.
+
+```{r}
+ggplot(data = candy2_sex, aes(candy2_sex$Sex, candy2_sex$n)) + 
+  stat_summary(fun.y = sum,
+               geom = "bar", aes(fill=Sex)) +
+  xlab("Sex") + ylab("Count")
+```
+
+The data shows that most people, for Halloween, are not going out.
+```{r}
+candy2_goingout <- candy2 %>%
+  group_by(`Going out`) %>%
+  summarize(n=n())
+
+candy2_goingout
+```
+
+```{r}
+ggplot(data = candy2_goingout, aes(candy2_goingout$`Going out`, candy2_goingout$n)) + 
+  stat_summary(fun.y = sum,
+               geom = "bar", aes(fill=`Going out`)) +
+  xlab("Sex") + ylab("Count")
+```
+
+This leads us to figure out how age impacts out survey.
+
+```{r}
+candy2_age <- candy2 %>%
+  group_by(Age) %>%
+  summarize(n=n())
+
+candy2_age
+```
+
+
+Looking at the Age data, we can see that some participants didn't take the survey seriously ... "old enough", "MY NAME JEFF", "older than dirt".  We need to clean this.
+
+##Cleaning Cont.
+
+```{r}
+candy2$Age <- as.integer(candy2$Age)
+```
+
+The data also has some ... older people that probably wont be going out for Halloween (1000 year olds ... or they're vampires).
+```{r}
+candy2_age <- candy2 %>%
+  group_by(Age, Sex) %>%
+  filter(Age < 90) %>%
+  summarize(n=n())
+```
+
+##Analysis and Conclusions
+
+If we visual the age data we get the following:
+```{r}
+ggplot(data = candy2_age, aes(candy2_age$Age, candy2_age$n)) + 
+  stat_summary(fun.y = sum,
+               geom = "bar", aes(fill=candy2_age$Sex)) +
+  xlab("Age") + ylab("Count") +
+  geom_vline(xintercept=41.5, color="red", size=1)
+```
+
+The data resemble a normal distribution,with a mean and median of 41.5.
+It seems that for our data, Males around the age of 30-60 are not going out for halloween!
+
+
+
+#Marriages and Divorce
+
+```{r}
+data <- read.csv("https://raw.githubusercontent.com/mandiemannz/Data-607--Fall-18/master/national_marriage_divorce_rates_00-16.csv")
+
+head(data, 10)
+```
+
+
+##Tidy/Clean Data
+
+
+The data has a lot of columns that don't really make sense.  The rename function will be applied using the tidyverse package in order to rename columns to more "user friendly" names.
+```{r}
+data <- data %>%
+  as.tbl() %>%
+  select(ï..Provisional.number.of.marriages.and.marriage.rate..United.States..2000.2016,
+         X,
+         X.1,
+         X.2) %>%
+  rename(num_marrage_rate = ï..Provisional.number.of.marriages.and.marriage.rate..United.States..2000.2016, marriages = X, population = X.1, rate_per_1000 = X.2)
+
+data
+```
+
+
+Some of the data also has unnecessary characters, such as "/" - referring to footnotes.  The gsub function can be used to parse the data and remove those characters.
+
+```{r}
+data1 <- data
+data1$num_marrage_rate <- gsub("/\\d", "", data$num_marrage_rate)
+data1 <- data1[-c(1:2), ]
+data1
+```
+
+The marriages column includes commas, so they can be removed so it make our calculations easier.  Once these commas are omitted, the data is convereted into intergers instead of characters.
+
+```{r}
+data1$marriages <- gsub(",", "", data1$marriages)
+data1$population <- gsub(",", "", data1$population)
+data1$marriages <- as.integer(data1$marriages)
+data1$population <- as.integer(data1$population)
+data1
+```
+
+
+
+The marriage and divorce are actually under the same column.  We can fix this by seperating and saving those columns into new variables, and renaming.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+df_marrages <- data1[1:17,]
+df_divorce <- data1[30:46,]
+df_divorce <- rename(df_divorce, divorce = marriages)
+df_combine <- data.frame(c(df_marrages, df_divorce))
+```
+
+We now have three cleaned variables - one for marriages  one for divorce, and one combined variable. 
+
+##Analysis and Conclusions
+
+```{r}
+ggplot(data = df_divorce, aes(df_divorce$num_marrage_rate, df_divorce$divorce)) + 
+  stat_summary(fun.y = sum,
+               geom = "bar", aes(fill=divorce)) +
+  theme(legend.position="none") +
+  xlab("Year") +
+  ylab("Count") +
+  ggtitle("Divorce")
+```
+
+
+```{r}
+ggplot(data = df_marrages, aes(df_marrages$num_marrage_rate, df_marrages$marriages)) + 
+  stat_summary(fun.y = sum,
+               geom = "bar", aes(fill = marriages)) +
+  theme(legend.position="none") +
+  xlab("Year") +
+  ylab("Count") +
+  ggtitle("Marriages")
+```
+
+
+```{r}
+ggplot(df_combine, aes(num_marrage_rate)) + 
+  geom_point(aes(y = marriages, colour = "marriages")) + 
+  geom_point(aes(y = divorce, colour = "divorce")) + xlab("Year") + ylab("Count") +
+  ggtitle("Marriage vs. Divorse")
+```
+
+In order to see how the # of marriages and divorces have changed, we can calculate a ratio of divorces/marriages
+
+```{r}
+df_combine <- df_combine %>%
+  mutate(dm_ratio = df_combine$divorce/df_combine$marriages)
+
+ggplot(df_combine, aes(df_combine$num_marrage_rate, dm_ratio)) +
+  geom_point(aes(color = dm_ratio)) + xlab("Year") + ylab("Ratio") +
+  theme_light()
+```
+
+According to the data, it shows that the # of divorces have decreased over the dataset.
+
+
+#Baby Names
+
+The head of the data is first displayed.  This shows exactly what data are being worked with.
+
+```{r}
+Popular_Baby_Names <- read_csv("https://raw.githubusercontent.com/mandiemannz/Data-607--Fall-18/master/Popular_Baby_Names.csv")
+head(Popular_Baby_Names)
+```
+
+
+##Data Wrangling and Analysis
+
+The first manipulation performed is an aggeragation by Year and Count. This shows how many total counts we have per year.
+```{r}
+Names_recorded <- Popular_Baby_Names %>%
+  group_by(`Year of Birth`) %>%
+  summarize(n=n())
+
+Names_recorded
+```
+
+The data is then visualized using ggplot2.  This shows the above aggregation in visual form.  
+```{r}
+ggplot(data = Names_recorded, aes(Names_recorded$`Year of Birth`, Names_recorded$n)) + 
+  stat_summary(fun.y = sum,
+               geom = "bar", aes(fill = `Year of Birth`)) +
+  xlab("Year of Birth") +
+  ylab("Lab Recorded")
+```
+
+
+The data is then aggregated by ethnicity vs. count.  This can give some insight to the total # of babies nammed for each ethnicity.  Accoridng to the data, white non-hispanic, and hispanic have the most counts in the data.
+
+```{r}
+ethnicitydata <- Popular_Baby_Names %>%
+  group_by(Ethnicity) %>%
+  summarize(n=n()) %>%
+  arrange(desc(n))
+
+ethnicitydata
+```
+
+The below is a visualization of the above data.
+```{r}
+ggplot(ethnicitydata, aes(reorder(Ethnicity, -n), n)) +
+         geom_bar(stat = "identity", aes(fill = Ethnicity)) +
+         theme(axis.text.x=element_text(angle=45, hjust=1)) +
+  xlab("Ethnicity") +
+  theme(legend.position="none")
+```
+
+The data is then filtered to show the most popular names - Liam being the most popular in the dataset.
+```{r}
+filter_names <- Popular_Baby_Names %>%
+  filter(Count > 200) %>%
+  select(`Child's First Name`, Count) %>%
+  arrange(desc(Count))
+
+
+filter_names
+```
+
+
+```{R}
+filter_names <- Popular_Baby_Names %>%
+  filter(Count > 200) %>%
+  select(`Child's First Name`, Count) %>%
+  arrange(desc(Count)) %>%
+ggplot(., aes(`Child's First Name`, Count)) + 
+  stat_summary(fun.y = sum,
+               geom = "bar") +
+  theme(axis.text.x=element_text(angle=90, hjust=1)) +
+  theme(legend.position="none") +
+  ylab("Count of Popular Names") +
+  xlab("Ethnicity")
+
+filter_names
+```
+
+
+```{r}
+Popular_Baby_Names %>%
+  group_by(Popular_Baby_Names$Ethnicity) %>%
+  filter(Count > 300) %>%
+  arrange(desc(Count))
+```
+
+#References:
+http://www.scq.ubc.ca/so-much-candy-data-seriously/ 
+https://sejdemyr.github.io/r-tutorials/basics/wide-and-long/ 
+http://r4ds.had.co.nz/strings.html#other-uses-of-regular-expressions 
+
