@@ -1,0 +1,26 @@
+{"books:":[
+  {
+    "title" : "Python Crash Course: A Hands-On, Project-Based Introduction to Programming",
+    "author" : "Eric Matthes",
+    "cover type" : "paperback",
+    "subject" : "programming",
+	"pages" : "525 "
+  }
+,
+  {
+    "title" : "R for Data Science: Import, Tidy, Transform, Visualize, and Model Data",
+    "author" : "Hadley Wickham and Garrett Grolemund",
+    "cover type" : "paperback",
+    "subject" : "programming",
+	"pages" : "492"
+  }
+,
+  {    
+    "title" : "Machine Learning with R",
+    "author" : "Brett Lantz",
+    "cover type" : "paperback",
+    "subject" : "programming",
+	"pages" : "424"
+  }
+
+]}
