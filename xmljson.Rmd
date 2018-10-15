@@ -1,0 +1,98 @@
+---
+title: "Working with XML and JSON in R"
+author: "Amanda Arce"
+date: "October 11, 2018"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: monochrome
+---
+
+
+##Task:
+
+##Pick three of your favorite books on one of your favorite subjects.   At least one of the books should have more than one author.  For each book, include the title, authors, and two or three other attributes that you find interesting. 
+
+
+##Take the information that you've selected about these three books, and separately create three files which store the book's information in HTML (using an html table), XML, and JSON formats (e.g.  "books.html", "books.xml", and "books.json"). To help you better understand the different file structures, I'd prefer that you create each of these files "by hand" unless you're already very comfortable with the file formats. Write R code, using your packages of choice, to load the information from each of the three sources into separate R data frames.   Are the three data frames identical?
+
+
+
+Libraries:
+
+```{r message=FALSE, warning=FALSE}
+library(RJSONIO)
+library(knitr)
+library(RCurl)
+library(tidyverse)
+library(XML)
+```
+
+#Reading in HTML data into R from Github
+
+```{r message=FALSE, warning=FALSE}
+
+html_url <- getURL("https://raw.githubusercontent.com/mandiemannz/Data-607--Fall-18/master/Bookshtml.html")
+
+#read html table
+
+html_data <- html_url%>%
+  readHTMLTable() %>%
+  data.frame()
+
+
+
+head(html_data)
+
+
+
+
+```
+
+```{r}
+colnames(html_data) <- str_replace(colnames(html_data),"NULL\\.", "")
+colnames(html_data) <- str_replace(colnames(html_data),"\\.", " ")
+
+kable(html_data)
+
+```
+
+#Reading XML data into R from Github
+```{r}
+xml_url<-getURL("https://raw.githubusercontent.com/mandiemannz/Data-607--Fall-18/master/booksxml.xml")
+
+```
+
+```{r}
+xml_data <- xml_url %>%
+  xmlParse() %>%
+  xmlToDataFrame()
+
+kable(xml_data)
+
+```
+
+
+#Reading JSON data into R from Github
+
+```{r}
+json_data <- getURLContent("https://raw.githubusercontent.com/mandiemannz/Data-607--Fall-18/master/json")
+
+
+
+json_data_frame <- fromJSON(json_data)
+json_data_frame <- do.call("rbind", lapply(json_data_frame$'books', data.frame, stringsAsFactors = FALSE))
+
+
+kable(json_data_frame)
+
+```
+
+##Conclusion:
+
+The HTML and XML data frames were identical, and the JSON data frame was slightly off. The JSON format separates each book into three different columns. 
+
+
+
