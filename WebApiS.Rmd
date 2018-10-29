@@ -1,0 +1,38 @@
+---
+title: "Data 607 Assignment Web APIs"
+author: Amanda Arce
+date: October 25, 2018
+output:
+  prettydoc::html_pretty:
+    theme: hpstr
+    highlight: github
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(httr)
+library(jsonlite)
+library(knitr)
+```
+
+
+```{R include=FALSE}
+api_key <- "f5603a6c31c742d4913d73d6d168653f"
+```
+
+
+```{r}
+url <- GET("https://api.nytimes.com/svc/movies/v2/reviews/search.json", query=list(api_key=api_key))
+
+names(url)
+```
+
+```{r}
+data <- as.data.frame(fromJSON(url$url))
+
+data1 <-data %>%
+  select(results.display_title, copyright, results.opening_date) %>%
+  head(15)
+kable(data1)
+
+```
