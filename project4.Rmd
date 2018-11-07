@@ -1,0 +1,200 @@
+---
+title: "CUNY MSDS DATA 607 Project 4"
+author: "Amanda Arce"
+date: "Nov 05, 2018"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: monochrome
+---
+#Project 4
+
+It can be useful to be able to classify new "test" documents using already classified "training" documents. A common example is using a corpus of labeled spam and ham (non-spam) e-mails to predict whether or not a new document is spam.
+
+For this project, you can start with a spam/ham dataset, then predict the class of new documents (either withheld from the training dataset or from another source such as your own spam folder). One example corpus: https://spamassassin.apache.org/publiccorpus/
+
+#Libraries
+
+```{R message=FALSE, warning=FALSE}
+library(tm)
+library(tidyverse)
+library(stringr)
+library(wordcloud)
+library(RTextTools)
+library(knitr)
+library(kableExtra)
+```
+
+First I performed "VCorpus"" (Volatile Corpus) to pull in the data from my directory. This allows us to pull in the entire directory into R Studio to begin our analysis on Spam vs Ham. 
+
+```{r}
+easy_ham <- VCorpus(DirSource("C:/Users/manda/OneDrive/Documents/easy_ham"))
+easy_spam <- VCorpus(DirSource("C:/Users/manda/OneDrive/Documents/easy_spam"))
+```
+
+Here we add the meta infomation to set the data for Spam, and Ham. 
+```{r}
+meta(easy_spam, tag = "type") <- "spam"
+meta(easy_ham, tag = "type") <- "ham"
+
+easy_comb <- c(easy_spam, easy_ham)
+
+```
+
+#Cleaning/ tiding up the data
+
+In this step we begin to clean the data of any inconsistencies. Our goal is to remove numbers, stopwords, punctuation, and white space. 
+
+```{r}
+easy_comb <- tm_map(easy_comb, content_transformer(function(x) iconv(x, "UTF-8", sub="byte")))
+easy_comb <- tm_map(easy_comb, content_transformer(tolower))
+easy_comb <- tm_map(easy_comb, removeNumbers)
+easy_comb <- tm_map(easy_comb, removeWords, stopwords("english"))
+easy_comb <- tm_map(easy_comb, removePunctuation)
+easy_comb <- tm_map(easy_comb, stripWhitespace)
+```
+We then arrange the data into a term text matrix. 
+
+
+Building a term Matrix and inspect
+
+```{r}
+dtm <- DocumentTermMatrix(easy_comb)
+m <- as.matrix(dtm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
+head(d, 10)
+
+```
+At this point, the data is then cleaned further by elimating spare words- infrequent words in the dataset (for example, less than 10 times). 
+```{r}
+dtm <- removeSparseTerms(dtm, 1-(10/length(easy_comb)))
+dtm
+
+```
+In rhis case, we like to take a peak to see which terms were frequently used. 
+```{r}
+dtm2 <- as.matrix(dtm)
+frequency <- colSums(dtm2)
+frequency <- sort(frequency, decreasing=T)
+table_freq <- head(frequency, 15)
+kable(table_freq, "html", escape = F) %>%
+  kable_styling("striped", full_width = T) %>%
+  column_spec(1, bold = T)
+
+```
+
+```{r}
+wordfreq <- data.frame(word=names(frequency), frequency=frequency)
+
+p <- ggplot(subset(wordfreq, frequency>2000), aes(x = reorder(word, -frequency), y = frequency)) +
+  geom_bar(stat = "identity", fill='#35a2c4') +
+  theme(axis.text.x=element_text(angle=90, hjust=1)) + 
+  theme(panel.background = element_rect(fill = '#adc8d1'))
+p
+```
+
+
+#Analysis: Predictions and Models
+
+The metadata was then analyzed, it turns out we have 2500 emails classified as HAM, and 1397 emails classified as spam.
+```{r}
+meta_type <- as.vector(unlist(meta(easy_comb)))
+meta_data <- data.frame(type = unlist(meta_type))
+
+table(meta_data)
+```
+
+Futhermore, we create a container using creat_container()funcation from RTextTools. 
+
+
+```{r}
+N <- length(meta_type)
+container <- create_container(dtm,
+                              labels = meta_type,
+                              trainSize = 1:2727,
+                              testSize = 2728:N,
+                              virgin = F)
+```
+Matrix_container. It contains a set of objects that are used for the estimation procedures of the supervised learning methods
+```{r}
+slotNames(container)
+```
+For this portion we use the train_model() function on the train data.
+
+```{r}
+svm_model <- train_model(container, "SVM")
+tree_model <- train_model(container, "TREE")
+maxent_model <- train_model(container, "MAXENT")
+
+```
+We then use our model to estimate if an email in our test dataset is spam or ham.
+
+
+
+```{r}
+svm_out <- classify_model(container, svm_model)
+tree_out <- classify_model(container, tree_model)
+maxent_out <- classify_model(container, maxent_model)
+
+```
+By looking at the outcome: the three models were combined into a single dataframe where the labels and estimes of the probability of classification are present. 
+```{r}
+model_results <- data.frame(head(svm_out), head(tree_out), head(maxent_out) )
+kable(model_results, "html", escape = F) %>%
+  kable_styling("striped", full_width = F) %>%
+  column_spec(1, bold = T)
+
+
+```
+Since using supervised learning, our models know the correct labels. We can use this to see exactly how correct the algorithm was in correctly classifying the documents.
+```{r}
+
+labels_out <- data.frame(
+  correct_label = meta_type[2728:N],
+  svm = as.character(svm_out[,1]),
+  tree = as.character(tree_out[,1]),
+  maxent = as.character(maxent_out[,1]),
+  stringsAsFactors = F)
+```
+
+```{r}
+table(labels_out[,1] == labels_out[,2])
+
+
+prop.table(table(labels_out[,1] == labels_out[,2]))
+
+table(labels_out[,1] == labels_out[,3])
+
+
+prop.table(table(labels_out[,1] == labels_out[,3]))
+
+table(labels_out[,1] == labels_out[,4])
+
+
+prop.table(table(labels_out[,1] == labels_out[,4]))
+```
+
+
+```{r}
+dfdata <- data.frame(table(labels_out[,1] == labels_out[,2]),
+                     table(labels_out[,1] == labels_out[,3]),
+                     table(labels_out[,1] == labels_out[,4])
+                     )
+
+colnames(dfdata) <- c("SVM","Freq", "Random Forest", "Freq", "Max Entropy", "Freq")
+kable(dfdata, "html", escape = F) %>%
+  kable_styling("striped", full_width = F) %>%
+  column_spec(1, bold = T)
+
+```
+
+#Conclusions:
+From looking at the results, we can tell that the Maximum Entropy was the best classifier, followed by the SVM. therefore, the worst classifier was the Random Forest.
+
+
+#References:
+
+Automated Data Collection with R: A Practical Guide to Web Scraping and Text Mining
