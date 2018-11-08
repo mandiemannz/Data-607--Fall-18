@@ -1,0 +1,24 @@
+---
+title: "Discussion 11 - Recommender Systems"
+author: "Amanda Arce"
+date: "November 7, 2018"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+```{r}
+```
+##Identify a recommender system web site, then Answer the three scenario design questions for this web site.
+
+
+
+##1) The target users for this recommender system are users of the Amazon Fresh platform.  Amazon Fresh is part of Amazon and it is a website in itself, although in order to access it, the customer will go onto Amazon.com and there they will be able to click and visit Amazon Fresh. Amazon fresh requires the customer to have a separate subscription. The target users are anyone looking to save time by shopping. convenience is the key in our society today, I know for sure I am one that uses Amazon Fresh wholeheartedly. I believe the target users are those that work fulltime careers and do not have time to shop at a brick and mortar store. 
+	
+	
+##2) Amazon Fresh key goals is to offer numerous options of groceries/ produce at the convenience of the customers mobile devices and computers.
+
+
+##3)	I can help Amazon Fresh by developing an algorithm that is set precisely to what time customer is searching. Sometimes, the current algorithm does not accurately work to find the customer's needs. Maybe I can develop a survey to see what type of items the customer has of interest. This can assist the process with its search accuracy. 
+ 
