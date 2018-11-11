@@ -1,0 +1,22 @@
+---
+title: "Final Project Proposal, NYC311 Call Center"
+author: "Amanda Arce"
+date: "November 10, 2018"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+
+
+Has anyone ever wondered about the non-emergency calls that people were making into New York City?  NYC 311 Call Center handles calls from the citizens of NYC, these calls are normally informational & non-emergency.  The callers are inquiring information in regard to city services and government programs.  A lot of the time people call 311 Call Centers to find out relevant information about school closures, street parking, and if a complaint needs to be filed against a city agency.  311 Call Centers can even route calls to emergency agencies (i.e., NYPD (New York Police Department) FDNY (Fire Department New York)). 
+
+For my final project, I would like to find out what types of calls are made in NYC and what types of complaints are done most through each borough in NYC. I hope by the end of my analysis to discover which of the boroughs in NYC have the most and least amounts of complaints and emergencies. 
+
+The data I will be using for my final presentation is from NYC open Data
+https://data.cityofnewyork.us/City-Government/311-Call-Center-Inquiry/tdd6-3ysr
+
+(The data consist of The 311 Call Center Inquiry dataset contains information on all agent-handled calls to the City's 311 information line, including date, time and topic.)
+
+https://www1.nyc.gov/311/connect-with-us.page
