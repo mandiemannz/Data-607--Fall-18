@@ -1,0 +1,75 @@
+---
+title: 'MySql and MongoDB '
+author: "Amanda Arce"
+date: "November 23, 2018"
+---
+
+For this assignment, you should take information from a relational database and migrate it to a NoSQL database of your own choosing.
+
+For the relational database, you might use the flights database, the tb database, the “data skills” database your team created for Project 3, or another database of your own choosing or creation.
+
+For the NoSQL database, you may use MongoDB (which we introduced in week 7), Neo4j, or another NoSQL database of your choosing.
+
+Your migration process needs to be reproducible. R code is encouraged, but not required. You should also briefly describe the advantages and disadvantages of storing the data in a relational database vs. your NoSQL database.
+
+
+
+
+Libraries:
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(RMySQL)
+library(dbConnect)
+library(DBI)
+library(mongolite)
+
+```
+# Use R code to connect to MySQL Database:
+```{r}
+mydb = dbConnect(MySQL(), 
+                 user='root', password='haley123', dbname='grads', host='localhost')
+```
+#Query MySQL DB to Pull data into R.
+```{r}
+grads<- dbGetQuery(mydb, "select * from graduation")
+
+head (grads)
+```
+
+
+```{r}
+
+grads2<- dbGetQuery(mydb, "select  distinct `School Name`, `Total Grads - n`,`Dropped Out - n`, `Still Enrolled - n`
+from graduation limit 10")
+
+grads2
+
+```
+
+#Connect to MongoDB and then migrate into MySQL tables grads and grads2 into a MongoDB collection
+```{r}
+mongodb <- mongo(collection = "test", db = "school")
+mongodb$insert(grads)
+
+```
+
+```{r}
+mongodb2 <- mongo(collection = "test", db= "school2")
+mongodb2$insert(grads2)
+
+
+
+```
+
+#Advantages/ Disadvantages of NoSQL (MongoDB) Vs SQL
+
+I noticed while using NoSql the data doesn't need to be "Structured"- 
+this means, every document in the collection can be different each other.
+
+For example, If you're using MySQL or PostgresSQL  you would conform certain variables. Such as 
+first name, last, email, phone number. You wouldn't be able to add anything other information into the tables unless the table allows it.
+ 
+While working in an unstructured database like MongoDB, the collection allows you to have more lead way. You can be able to have additional documents  within the same collection.
+
+A disadvantage for using NoSQL is that is still pretty new. Relational databases such as MySQL have been around longer, so NoSQL db can be stuck without inheriting needed support. 
+ 
+ 
